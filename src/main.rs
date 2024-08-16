@@ -3,6 +3,8 @@ use std::io::Write;
 use std::iter::repeat;
 use std::thread;
 
+use itertools::Itertools;
+
 fn main() {
     let folder_path = "rust-ssn-batches";
     fs::remove_dir_all(folder_path).ok();
@@ -16,10 +18,11 @@ fn main() {
         // it would be nicer to use .intersperse() to add the newline, but it's nightly only
 
     let mut batches = Vec::with_capacity(26);
-    let ssns_ref = ssns.by_ref();
+    let ssns_chunked = ssns.chunks(4_000_000).into_iter();
     for c in b'a'..=b'z' {
-        batches.push((c, ssns_ref.take(4_000_000)));
+        batches.push((c, ssns_chunked.next().unwrap()));
     }
+    assert!(ssns_chunked.next().is_none());
 
     // write to file in batches
     thread::scope(|scope| {
